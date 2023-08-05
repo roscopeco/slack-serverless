@@ -1,0 +1,4 @@
+/.idea/
+/slack-serverless.iml
+/dist/
+/src/slack_serverless.egg-info/
