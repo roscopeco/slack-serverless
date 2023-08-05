@@ -14,8 +14,11 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
 ]
-keywords = ["feed", "reader", "tutorial"]
-dependencies = []
+keywords = ["slack", "serverless", "cloud", "chatbot"]
+dependencies = [
+    "requests>=2.31.0",
+    "google-cloud-pubsub>=2.18.1",
+]
 requires-python = ">=3.10"
 
 [project.optional-dependencies]
