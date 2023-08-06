@@ -27,6 +27,28 @@ def command_handler(payload):
     return slack_in_channel_text_response(f"Hi there <@{slack_tags([payload['user_id']])}>")
 ```
 
+### Message Deferral
+
+If you need to take more than three seconds to reply to a Slack message, the usual
+thing to do in a serverless environment is hand off the message to another function,
+and have the first one acknowledge receipt back to Slack within three seconds. This 
+is required - failing to respond in a timely fashion will result in the user seeing
+an error message.
+
+This library provides a comfort wrapper around this use case - all you need to do is
+set up a PubSub topic (or your cloud's equivalent, though only GCP is supported as yet)
+and defer the message in your main Slack handler with the `slack_defer` function.
+
+You then have a second lambda, triggered by the pubsub (Eventarc or equivalent) in 
+which the main function is decorated with `@slack_deferred_slash_handler_gcp`
+(despite the name, it supports both events and slash commands - it'll be 
+changing soon) and handles the event.
+
+This will take care of wrapping and unwrapping the event appropriately and generally
+trades of some ease of use for a little flexibility. If it doesn't meet your needs
+you can of course just ignore it and code up the functionality yourself.
+
+
 ### Other Cloud Providers
 
 Things will be a bit more manual here (but I'll happily add comfort wrappers if
