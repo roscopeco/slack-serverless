@@ -1,7 +1,33 @@
 from typing import Any
 
+import requests
+
 EPHEMERAL = "ephemeral"
 IN_CHANNEL = "in_channel"
+
+
+def slack_post_message(
+    slack_access_token: str,
+    channel: str,
+    text: str,
+    endpoint: str = "https://slack.com/api/chat.postMessage",
+) -> bool:
+    """
+    Post an immediate simple text message to slack.
+
+    :param slack_access_token: The bot access token (from your Slack app settings).
+    :param channel: The channel to post to.
+    :param text: The message text.
+    :param endpoint: (Optional) use a different Slack endpoint.
+    :return: True if success, False otherwise.
+    """
+    response = requests.post(
+        endpoint,
+        json={"channel": channel, "text": text},
+        headers={"Authorization": f"Bearer {slack_access_token}"},
+    )
+
+    return response.status_code == 200
 
 
 def slack_ephemeral_text_response(text: str) -> dict[str, str]:
