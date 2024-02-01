@@ -2,3 +2,4 @@
 /slack-serverless.iml
 /dist/
 /src/slack_serverless.egg-info/
+**/__pycache__
