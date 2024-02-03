@@ -6,7 +6,7 @@ EPHEMERAL = "ephemeral"
 IN_CHANNEL = "in_channel"
 
 
-def slack_post(
+def slack_post_message(
     slack_access_token: str,
     channel: str,
     message: dict[str, Any],
@@ -30,7 +30,7 @@ def slack_post(
     return response.status_code == 200
 
 
-def slack_post_message(
+def slack_post_text_message(
     slack_access_token: str,
     channel: str,
     text: str,
@@ -47,7 +47,7 @@ def slack_post_message(
     :param endpoint: (Optional) use a different Slack endpoint.
     :return: True if success, False otherwise.
     """
-    return slack_post(
+    return slack_post_message(
         slack_access_token=slack_access_token,
         channel=channel,
         message={**{"text": text}, **(params or {})},
@@ -72,7 +72,7 @@ def slack_post_blocks_message(
     :param endpoint: (Optional) use a different Slack endpoint.
     :return: True if success, False otherwise.
     """
-    return slack_post(
+    return slack_post_message(
         slack_access_token=slack_access_token,
         channel=channel,
         message={**{"blocks": blocks}, **(params or {})},
