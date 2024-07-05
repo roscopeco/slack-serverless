@@ -16,8 +16,7 @@ classifiers = [
 ]
 keywords = ["slack", "serverless", "cloud", "chatbot"]
 dependencies = [
-    "requests>=2.31.0",
-    "google-cloud-pubsub>=2.18.1",
+    "requests>=2.32.0",
 ]
 requires-python = ">=3.10"
 

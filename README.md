@@ -29,6 +29,10 @@ def command_handler(payload):
 
 ### Message Deferral
 
+> **Note** to avoid dependency conflicts, this library does not depend on the
+> cloud provider APIs that are needed. For GCP, be sure to add `google-cloud-pubsub>=2.18.1`
+> to your `requirements.txt` (or whatever) if you're using deferral.
+
 If you need to take more than three seconds to reply to a Slack message, the usual
 thing to do in a serverless environment is hand off the message to another function,
 and have the first one acknowledge receipt back to Slack within three seconds. This 
