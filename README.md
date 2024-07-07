@@ -13,6 +13,7 @@ I will grow it with things I end up needing in my work, but if you have differen
 needs and want to extend the library to support them, then PRs would be gratefully
 received!
 
+
 ### MVP Example
 
 This will accept any slash command you've configured for your bot, and just greet 
@@ -51,6 +52,14 @@ changing soon) and handles the event.
 This will take care of wrapping and unwrapping the event appropriately and generally
 trades of some ease of use for a little flexibility. If it doesn't meet your needs
 you can of course just ignore it and code up the functionality yourself.
+
+
+### AWS
+
+AWS is supported (at least, Lambdas with API Gateway proxy triggers are), and it's
+much the same as for GCP - just use the `slack_slash_command_aws_api_gateway_proxy`
+and `slack_event_webhook_aws_api_gateway_proxy` decorators instead of the GCP 
+ones, and you should be good to go.
 
 
 ### Other Cloud Providers
