@@ -31,6 +31,30 @@ def slack_slash_command_gcp(slack_signing_secret: str):
     )
 
 
+def slack_slash_command_aws_api_gateway_proxy(slack_signing_secret: str):
+    """
+    Decorate a function as an AWS API Gateway lambda proxy compatible Slack slash command webhook handler.
+
+    This decorator will automatically handle Slack signature verification for you and will
+    pass the decoded payload into your decorated function.
+
+    The decorated function should accept a single request argument compatible with dict[str, list[str]],
+    which will hold the extracted Slack payload.
+
+    The return value should be a dict[str, str] with the JSON body for the response back to Slack.
+
+    :param slack_signing_secret: The Slack signing secret for your app.
+    :return: The decorated function. This can be used directly as an AWS lambda function handler.
+    """
+    return slack_slash_command(
+        slack_signing_secret,
+        lambda request, name: request["headers"].get(name),
+        lambda request: request["body"],
+        lambda raw_body: parse_qs(raw_body),
+        lambda body, status: {"statusCode": status, "body": json.dumps(body)},
+    )
+
+
 def slack_slash_command(
     slack_signing_secret: str,
     header_func: Callable[[Any, str], str],
@@ -58,7 +82,9 @@ def slack_slash_command(
     """
 
     def decorator(base_func: Callable[[dict[str, list[str]]], dict[str, Any]]):
-        def handler(request: Any) -> tuple[dict[str, Any], int, dict[str, str]]:
+        def handler(
+            request: Any, *args, **kwargs
+        ) -> tuple[dict[str, Any], int, dict[str, str]]:
             timestamp, sig, request_data = __extract_validation_data(
                 request, header_func, raw_body_func
             )
@@ -68,7 +94,9 @@ def slack_slash_command(
             ):
                 return response_func(__unauthorized(), 401)
 
-            return response_func(base_func(parse_body_func(request_data)), 200)
+            return response_func(
+                base_func(parse_body_func(request_data), *args, **kwargs), 200
+            )
 
         return handler
 
@@ -99,6 +127,30 @@ def slack_event_webhook_gcp(slack_signing_secret: str):
     )
 
 
+def slack_event_webhook_aws_api_gateway_proxy(slack_signing_secret: str):
+    """
+    Decorate a function as an AWS API Gateway lambda proxy compatible Slack Event API webhook handler.
+
+    This decorator will automatically handle Slack signature verification and the API registration
+    challenge for you and will pass the decoded payload (JSON) into your decorated function.
+
+    The decorated function should accept a single request argument compatible with dict[str, list[str]],
+    which will hold the extracted Slack payload.
+
+    The return value should be a dict[str, str] with the JSON body for the response back to Slack.
+
+    :param slack_signing_secret: The Slack signing secret for your app.
+    :return: The decorated function. This can be used directly as a Lambda function handler.
+    """
+    return slack_event_webhook(
+        slack_signing_secret,
+        lambda request, name: request["headers"].get(name),
+        lambda request: request["body"],
+        lambda raw_body: json.loads(raw_body),
+        lambda body, status: {"statusCode": status, "body": json.dumps(body)},
+    )
+
+
 def slack_event_webhook(
     slack_signing_secret: str,
     header_func: Callable[[Any, str], str],
@@ -126,7 +178,9 @@ def slack_event_webhook(
     """
 
     def decorator(base_func: Callable[[dict[str, Any]], dict[str, Any]]):
-        def handler(request: Any) -> tuple[dict[str, Any], int, dict[str, str]]:
+        def handler(
+            request: Any, *args, **kwargs
+        ) -> tuple[dict[str, Any], int, dict[str, str]]:
             timestamp, sig, request_data = __extract_validation_data(
                 request, header_func, raw_body_func
             )
@@ -137,10 +191,11 @@ def slack_event_webhook(
                 return response_func(__unauthorized(), 401)
 
             body = parse_body_func(request_data)
+
             if body.get("type") == "url_verification":
                 return response_func({"challenge": body["challenge"]}, 200)
 
-            return response_func(base_func(body), 200)
+            return response_func(base_func(body, *args, **kwargs), 200)
 
         return handler
 
@@ -181,7 +236,10 @@ def is_valid_slack_request(
     if abs(time.time() - int(timestamp)) > 300:
         return False
 
-    basestring = "v0:" + str(timestamp) + ":" + str(raw_body.decode())
+    if isinstance(raw_body, bytes):
+        raw_body = str(raw_body.decode())
+
+    basestring = "v0:" + str(timestamp) + ":" + raw_body
     expected_signature = (
         "v0="
         + hmac.new(
