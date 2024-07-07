@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "slack-serverless"
-version = "2024.1008"
+version = "2024.1009-dev"
 description = "Simplified serverless Slack bot interactions"
 readme = "README.md"
 authors = [{ name = "Ross Bamford", email = "roscopeco@gmail.com" }]
@@ -27,7 +27,7 @@ dev = ["black", "bumpver", "pre-commit", "isort", "pip-tools", "pytest", "sure",
 Homepage = "https://github.com/roscopeco/slack-serverless"
 
 [tool.bumpver]
-current_version = "2024.1008"
+current_version = "2024.1009-dev"
 version_pattern = "YYYY.BUILD[-TAG]"
 commit_message = "bump version {old_version} -> {new_version}"
 tag_message = "{new_version}"
