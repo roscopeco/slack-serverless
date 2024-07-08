@@ -54,7 +54,7 @@ def slack_slash_command_aws_api_gateway_proxy(slack_signing_secret: str):
         lambda raw_body: parse_qs(raw_body.decode()),
         lambda body, status: {
             "statusCode": status,
-            "body": body,
+            "body": json.dumps(body),
             "headers": __json_header(),
         },
     )
