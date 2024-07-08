@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import json
 import time
+import base64
 
 from urllib.parse import parse_qs
 from typing import Any, Callable
@@ -49,9 +50,13 @@ def slack_slash_command_aws_api_gateway_proxy(slack_signing_secret: str):
     return slack_slash_command(
         slack_signing_secret,
         lambda request, name: request["headers"].get(name),
-        lambda request: request["body"],
-        lambda raw_body: parse_qs(raw_body),
-        lambda body, status: {"statusCode": status, "body": json.dumps(body)},
+        lambda request: base64.b64decode(request["body"]),
+        lambda raw_body: parse_qs(raw_body.decode()),
+        lambda body, status: {
+            "statusCode": status,
+            "body": body,
+            "headers": __json_header(),
+        },
     )
 
 
@@ -60,9 +65,7 @@ def slack_slash_command(
     header_func: Callable[[Any, str], str],
     raw_body_func: Callable[[Any], bytes],
     parse_body_func: Callable[[bytes], dict[str, list[str]]],
-    response_func: Callable[
-        [dict[str, Any], int], tuple[dict[str, Any], int, dict[str, str]]
-    ],
+    response_func: Callable[[dict[str, Any], int], Any],
 ):
     """
     Decorate a function as a generic serverless Slack slash command webhook handler.
@@ -147,7 +150,11 @@ def slack_event_webhook_aws_api_gateway_proxy(slack_signing_secret: str):
         lambda request, name: request["headers"].get(name),
         lambda request: request["body"],
         lambda raw_body: json.loads(raw_body),
-        lambda body, status: {"statusCode": status, "body": json.dumps(body)},
+        lambda body, status: {
+            "statusCode": status,
+            "body": json.dumps(body),
+            "headers": __json_header(),
+        },
     )
 
 
@@ -156,9 +163,7 @@ def slack_event_webhook(
     header_func: Callable[[Any, str], str],
     raw_body_func: Callable[[Any], bytes],
     parse_body_func: Callable[[bytes], dict[str, Any]],
-    response_func: Callable[
-        [dict[str, Any], int], tuple[dict[str, Any], int, dict[str, str]]
-    ],
+    response_func: Callable[[dict[str, Any], int], Any],
 ):
     """
     Decorate a function as a generic serverless Slack Event API webhook handler.
