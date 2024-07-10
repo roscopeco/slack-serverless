@@ -1,17 +1,15 @@
-import base64
 import json
-from concurrent.futures import CancelledError
 from typing import Callable, Any
 
 import requests
-from google.cloud.pubsub_v1 import PublisherClient
-from google.cloud.pubsub_v1.publisher.exceptions import MessageTooLargeError
 from requests import Response
 
+from botocore.exceptions import ClientError
 
-def slack_defer_gcp(
-    publisher: PublisherClient,
-    topic: str,
+
+def slack_defer_aws(
+    publisher: Any,  # TODO fix this type hint
+    topic_arn: str,
     response_target: str,
     user_id: str,
     interaction_type: str,
@@ -19,10 +17,10 @@ def slack_defer_gcp(
     data: dict[Any, Any] = None,
 ):
     """
-    Defer processing of a Slack message by publishing it to a Cloud PubSub topic.
+    Defer processing of a Slack message by publishing it to an SNS topic.
 
-    :param publisher: The GCP client publisher.
-    :param topic: The topic name.
+    :param publisher: The SNS client publisher.
+    :param topic_arn: The topic arn
     :param response_target: The response target (URL or channel) for this Slack interaction.
     :param user_id: The Slack user ID.
     :param interaction_type: The interaction type (currently, "event" or "slash_command")
@@ -35,8 +33,10 @@ def slack_defer_gcp(
 
     try:
         publisher.publish(
-            topic,
-            json.dumps(
+            TopicArn=topic_arn,
+            MessageGroupId="slack_deferred",
+            MessageDeduplicationId=event["event_id"],
+            Message=json.dumps(
                 {
                     "response_target": response_target,
                     "user_id": user_id,
@@ -44,20 +44,20 @@ def slack_defer_gcp(
                     "event": event,
                     "data": data,
                 }
-            ).encode("utf-8"),
-            timeout=20,
-        ).result(30)
+            ),
+        )
 
         return True
-    except TimeoutError | CancelledError | MessageTooLargeError:
+    except ClientError as e:
+        print(e)
         return False
 
 
-def slack_deferred_slash_handler_gcp(
+def slack_deferred_slash_handler_aws(
     base_func: Callable[[str, str, str, dict[str, Any], dict[str, Any]], None]
 ):
     """
-    Decorator that can be applied to a Google cloud function to make the handling of deferred
+    Decorator that can be applied to an AWS Lambda function to make the handling of deferred
     Slack messages (with slack_defer) more automatic. Just abstracts away some of the payload
     decoding and handling.
 
@@ -72,7 +72,7 @@ def slack_deferred_slash_handler_gcp(
     :return: The decorated function. This is suitable for direct use as a GCP event triggered function.
     """
 
-    def handler(event: dict[str, Any], *rest):
+    def handler(event: dict[str, Any], *rest, **kwargs):
         try:
             (
                 response_target,
@@ -81,7 +81,15 @@ def slack_deferred_slash_handler_gcp(
                 original_event,
                 data,
             ) = __decode_payload(event)
-            base_func(response_target, user_id, interaction_type, original_event, data)
+            base_func(
+                response_target,
+                user_id,
+                interaction_type,
+                original_event,
+                data,
+                *rest,
+                **kwargs,
+            )
         except KeyError:
             print("Received apparently-malformed message: " + str(event))
 
@@ -102,7 +110,8 @@ def slack_deferred_response(response_url: str, content: dict[str, Any]) -> Respo
 def __decode_payload(
     event: dict[str, Any]
 ) -> tuple[str, str, str, dict[str, Any], dict[str, Any]]:
-    data = json.loads(base64.b64decode(event["data"]).decode("utf-8"))
+    body = json.loads(event["Records"][0]["body"])
+    data = json.loads(body["Message"])
     return (
         data["response_target"],
         data["user_id"],
