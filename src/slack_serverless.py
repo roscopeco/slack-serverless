@@ -50,7 +50,7 @@ def slack_slash_command_aws_api_gateway_proxy(slack_signing_secret: str):
     return slack_slash_command(
         slack_signing_secret,
         lambda request, name: request["headers"].get(name),
-        lambda request: base64.b64decode(request["body"]),
+        __extract_raw_api_gateway_body,
         lambda raw_body: parse_qs(raw_body.decode()),
         lambda body, status: {
             "statusCode": status,
@@ -58,6 +58,13 @@ def slack_slash_command_aws_api_gateway_proxy(slack_signing_secret: str):
             "headers": __json_header(),
         },
     )
+
+
+def __extract_raw_api_gateway_body(request: Any):
+    if request["headers"].get("isBase64Encoded"):
+        return base64.b64decode(request["body"])
+    else:
+        return str(request["body"]).encode()
 
 
 def slack_slash_command(
