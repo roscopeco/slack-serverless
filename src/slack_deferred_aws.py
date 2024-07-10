@@ -31,11 +31,18 @@ def slack_defer_aws(
     if data is None:
         data = {}
 
+    if interaction_type == "slash":
+        # for slash commands, use unique response URL as the dedup key
+        dedup_id = "".join(response_target)
+    else:
+        # for events, use the event ID as the dedup key
+        dedup_id = event["event_id"]
+
     try:
         publisher.publish(
             TopicArn=topic_arn,
             MessageGroupId="slack_deferred",
-            MessageDeduplicationId=event["event_id"],
+            MessageDeduplicationId=dedup_id,
             Message=json.dumps(
                 {
                     "response_target": response_target,
