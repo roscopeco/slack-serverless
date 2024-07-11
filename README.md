@@ -41,16 +41,16 @@ is required - failing to respond in a timely fashion will result in the user see
 an error message.
 
 This library provides a comfort wrapper around this use case - all you need to do is
-set up a PubSub topic (or your cloud's equivalent, though only GCP is supported as yet)
-and defer the message in your main Slack handler with the `slack_defer` function.
+set up a PubSub topic (or your cloud's equivalent) and defer the message in your main 
+Slack handler with the approproate `slack_defer_<provider>` function.
 
 You then have a second lambda, triggered by the pubsub (Eventarc or equivalent) in 
-which the main function is decorated with `@slack_deferred_slash_handler_gcp`
+which the main function is decorated with `@slack_deferred_slash_handler_<provider>`
 (despite the name, it supports both events and slash commands - it'll be 
 changing soon) and handles the event.
 
 This will take care of wrapping and unwrapping the event appropriately and generally
-trades of some ease of use for a little flexibility. If it doesn't meet your needs
+trades off a little flexibility for some ease of use. If it doesn't meet your needs
 you can of course just ignore it and code up the functionality yourself.
 
 
