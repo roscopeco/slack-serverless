@@ -80,6 +80,6 @@ plan to push a PR.
 
 ### Legal Mumbo-Jumbo
 
-Copyright (c)2023 Ross Bamford (and contributors)
+Copyright (c)2023-2024 Ross Bamford (and contributors)
 
 License: MIT (see `LICENSE.md` for details).
