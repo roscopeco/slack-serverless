@@ -2,8 +2,10 @@
 
 ![PyPI](https://img.shields.io/pypi/v/slack-serverless)
 
-This is a (currently very simple) library that eases development of serverless Slack
-app and bots.
+This is a simple library that eases development of serverless Slack
+app and bots. It is designed and built in a similar way my 
+[discord-serverless](https://github.com/roscopeco/discord-serverless) library, upon
+which it was originally based.
 
 Currently, it has support for both AWS and Google Cloud Platform, but is easily generalised.
 It provides a decorator and some utility functions that make Slack signature verification 
