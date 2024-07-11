@@ -5,9 +5,9 @@
 This is a (currently very simple) library that eases development of serverless Slack
 app and bots.
 
-Currently, it targets Google Cloud Platform (but is easily generalised), and provides 
-a decorator and some utility functions that make Slack signature verification automatic
-and help with building responses in a very lightweight fashion.
+Currently, it has support for both AWS and Google Cloud Platform, but is easily generalised.
+It provides a decorator and some utility functions that make Slack signature verification 
+automatic and help with building responses in a very lightweight fashion.
 
 I will grow it with things I end up needing in my work, but if you have different
 needs and want to extend the library to support them, then PRs would be gratefully
